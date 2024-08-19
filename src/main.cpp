@@ -36,10 +36,9 @@ DHTesp dht;
 
 /******Objetos*******/
 
-
 // Definicao dos topicos de publicacao
 #define mqtt_pub_topic1 "projeto/fidelis"
-#define mqtt_pub_topic2 "projeto/fidelis2"
+#define mqtt_pub_topic2 "projeto/fidelisTeste2"
 #define mqtt_pub_topic3 "projetoFidelis/DHT22"
 
 // Protótipos das funções do main.cpp
@@ -47,7 +46,7 @@ void acao_botao_boot_pressionado();
 
 void setup()
 {
-  
+
   dht.setup(DHTPIN, DHTesp::DHT22);
   Serial.begin(115200);
   setup_wifi();
@@ -66,53 +65,66 @@ void loop()
   atualiza_botoes();
   atualiza_mqtt();
 
-  
-
-
   // if (millis() - tempo_anterior >= intervalo)
   // {
   //   tempo_anterior = millis();
-    // float umidade = dht.getHumidity();
-    // float temperatura = dht.getTemperature();
+  // float umidade = dht.getHumidity();
+  // float temperatura = dht.getTemperature();
 
-    String json;
+  // doc["umidade"] = umidade;
+  // doc["temperatura"] = temperatura;
+  // doc["angulo"] = angulo;
+  // doc["EstadoLed"] = LedBuiltInState;
+  // doc["EstadoLed2"] = SecondLedBuiltInState;
+  // doc["botao"] = !estado_botaointerno();
+  // doc["botao2"] = !estado_botaoexterno();
 
-    JsonDocument doc;
-    // doc["umidade"] = umidade;
-    // doc["temperatura"] = temperatura;
-    // doc["angulo"] = angulo;
-    // doc["EstadoLed"] = LedBuiltInState;
-    // doc["EstadoLed2"] = SecondLedBuiltInState;
-    // doc["botao"] = !estado_botaointerno();
-    // doc["botao2"] = !estado_botaoexterno();
+  // serializeJson(doc, json);
 
-    serializeJson(doc, json);
+  // publica_mqtt(mqtt_pub_topic3, json);
 
-    publica_mqtt(mqtt_pub_topic3, json);
-
-  
   // }
 
-  acao_botao_boot_pressionado();
+  // acao_botao_boot_pressionado();
+  if (millis() - tempo_anterior >= intervalo)
+  {
+    tempo_anterior = millis();
+    String json;
+    JsonDocument doc;
+    doc["TimeStamp"] = timeStamp();
+    serializeJson(doc, json);
+    publica_mqtt(mqtt_pub_topic2, json);
+  }
+  if (second_botao_boot_pressionado())
+  {
+    SecondLedBuiltInState = !SecondLedBuiltInState;
+    String json_01;
+    JsonDocument doc_01;
+    doc_01["TimeStamp"] = timeStamp();
+    doc_01["botao"] = !estado_botaointerno();
+    doc_01["EstadoLed2"] = SecondLedBuiltInState;
+    serializeJson(doc_01, json_01);
+    publica_mqtt(mqtt_pub_topic2, json_01);
+  }
 }
 
 // Função que verifica se o botão foi pressionado e sua ação
-void acao_botao_boot_pressionado()
-{
-  if (botao_boot_pressionado())
-  {
-    LedBuiltInState = !LedBuiltInState;
-    if (LedBuiltInState)
-      publica_mqtt(mqtt_pub_topic1, "Ligado");
-    else
-      publica_mqtt(mqtt_pub_topic1, "Desligado");
-  }
-  else if (second_botao_boot_pressionado())
-  {
-    SecondLedBuiltInState = !SecondLedBuiltInState;
-    if (SecondLedBuiltInState)
-      publica_mqtt(mqtt_pub_topic2, "Ligado");
-    else
-      publica_mqtt(mqtt_pub_topic2, "Desligado");
-  }
-}
+// void acao_botao_boot_pressionado()
+// {
+//   if (botao_boot_pressionado())
+//   {
+//     LedBuiltInState = !LedBuiltInState;
+//     if (LedBuiltInState)
+//       publica_mqtt(mqtt_pub_topic1, "Ligado");
+//     else
+//       publica_mqtt(mqtt_pub_topic1, "Desligado");
+//   }
+//   else if (second_botao_boot_pressionado())
+//   {
+//     SecondLedBuiltInState = !SecondLedBuiltInState;
+//     if (SecondLedBuiltInState)
+//       publica_mqtt(mqtt_pub_topic2, "Ligado");
+//     else
+//       publica_mqtt(mqtt_pub_topic2, "Desligado");
+//   }
+// }

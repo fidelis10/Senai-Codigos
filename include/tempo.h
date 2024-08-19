@@ -16,3 +16,5 @@ void setup_time();
 
 //Atualiza o servidor NTP
 void atualiza_time();
+
+extern unsigned long epochTime;
