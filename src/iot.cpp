@@ -9,18 +9,20 @@
 #include <U8g2lib.h>
 #include <ArduinoJson.h>
 
-float var_temperatura;
-float var_pressao;
-float var_altitude;
-int var_umidade;
-float var_co2;
-unsigned long var_timestamp;
+// float var_temperatura;
+// float var_pressao;
+// float var_altitude;
+// int var_umidade;
+// float var_co2;
+// unsigned long var_timestamp;
+
+
 
 
 
 // Definição dos tópicos de inscrição
 #define mqtt_topic1 "projeto/fidelis"
-#define mqtt_topic2 "projeto/fidelisTeste2"
+#define mqtt_topic2 "projeto/fidelis/Desafio"
 #define mqtt_topic3 "projetoFidelis/servo"
 #define mqtt_topic4 "projetoFidelis/DHT22"
 #define mqtt_topicSenai "projeto_integrado/SENAI134/Cienciadedados/GrupoX"
@@ -135,10 +137,16 @@ void inscricao_topicos()
 // Trata as mensagens recebidas
 void tratar_msg(char *topic, String msg)
 {
-  // JsonDocument doc;
-  // deserializeJson(doc, msg); // Deserialization
-  // if (doc.containsKey("temperature")) // Validacao de dadossss
-  // var_temperatura = doc["temperature"]; 
+  JsonDocument doc;
+  deserializeJson(doc, msg); // Deserialization
+   if (msg == "1234") {
+     if (doc.containsKey("EstadoLed")) {
+       LedBuiltInState = doc["EstadoLed"]; 
+     } // Validacao de dadosss
+   }
+ 
+ 
+   
 
   // if (doc.containsKey("pressure"))
   // var_pressao = doc["pressure"];
@@ -186,7 +194,7 @@ void tratar_msg(char *topic, String msg)
   // setTime(var_timestamp);
   // Serial.printf("%02d/%02d/%04d %02d:%02d:%02d \n", day(), month(), year());
   // Serial.printf(" %02d:%02d:%02d \n", hour(), minute(), second());
-  // if (strcmp(topic, mqtt_topic1) == 0)
+  // if (strcmp(topic, mqtt_topic2) == 0)
   // {
   //   if (msg == "liga")
   //   {
@@ -242,7 +250,6 @@ void tratar_msg(char *topic, String msg)
   //   Serial.print("Temperatura: ");
   //   Serial.println(temperatura);
   //   Serial.println(" *C ");
-  // }
- 
-}
+  }
+
 

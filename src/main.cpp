@@ -24,7 +24,7 @@
 #include <U8g2lib.h>
 
 unsigned long tempo_anterior = 0;
-const unsigned long intervalo = 1000;
+const unsigned long intervalo = 5000;
 
 #define BOTAO_BOOT_PIN 12
 #define SECOND_BOTAO_BOOT_PIN 0
@@ -38,11 +38,10 @@ DHTesp dht;
 
 // Definicao dos topicos de publicacao
 #define mqtt_pub_topic1 "projeto/fidelis"
-#define mqtt_pub_topic2 "projeto/fidelisTeste2"
+#define mqtt_pub_topic2 "projeto/fidelis/Desafio"
 #define mqtt_pub_topic3 "projetoFidelis/DHT22"
 
 // Protótipos das funções do main.cpp
-void acao_botao_boot_pressionado();
 
 void setup()
 {
@@ -64,7 +63,6 @@ void loop()
   atualiza_saidas();
   atualiza_botoes();
   atualiza_mqtt();
-
   // if (millis() - tempo_anterior >= intervalo)
   // {
   //   tempo_anterior = millis();
@@ -85,35 +83,39 @@ void loop()
 
   // }
 
-  // acao_botao_boot_pressionado();
+  String json;
+  JsonDocument doc;
+  bool mensagemEmFila = false;
   if (millis() - tempo_anterior >= intervalo)
   {
     tempo_anterior = millis();
-    String json;
-    JsonDocument doc;
     doc["TimeStamp"] = timeStamp();
+    mensagemEmFila = true;
+  }
+      if (botao_boot_pressionado())
+  {
+    LedBuiltInState = !LedBuiltInState;
+    doc["EstadoLed"] = LedBuiltInState;
+    doc["BotaoState"] = true;
+    doc["TimeStamp"] = timeStamp();
+    mensagemEmFila = true;
+  }
+  else if (estado_botaoexterno())
+  {
+    doc["BotaoState"] = false;
+    doc["TimeStamp"] = timeStamp();
+    mensagemEmFila = true;
+  } 
+
+  if (mensagemEmFila) 
+  {
     serializeJson(doc, json);
     publica_mqtt(mqtt_pub_topic2, json);
-  }
-  if (second_botao_boot_pressionado())
-  {
-    SecondLedBuiltInState = !SecondLedBuiltInState;
-    String json_01;
-    JsonDocument doc_01;
-    doc_01["TimeStamp"] = timeStamp();
-    doc_01["botao"] = !estado_botaointerno();
-    doc_01["EstadoLed2"] = SecondLedBuiltInState;
-    serializeJson(doc_01, json_01);
-    publica_mqtt(mqtt_pub_topic2, json_01);
+    mensagemEmFila = false;
   }
 }
 
 // Função que verifica se o botão foi pressionado e sua ação
-// void acao_botao_boot_pressionado()
-// {
-//   if (botao_boot_pressionado())
-//   {
-//     LedBuiltInState = !LedBuiltInState;
 //     if (LedBuiltInState)
 //       publica_mqtt(mqtt_pub_topic1, "Ligado");
 //     else
