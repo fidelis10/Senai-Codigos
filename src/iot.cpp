@@ -6,6 +6,7 @@
 #include "senhas.h"
 #include "saidas.h"
 #include "Atuadores.h"
+#include "tempo.h"
 #include <U8g2lib.h>
 #include <ArduinoJson.h>
 
@@ -16,7 +17,7 @@
 // float var_co2;
 // unsigned long var_timestamp;
 
-
+bool ConfereSenha = false;
 
 
 
@@ -42,6 +43,16 @@ void callback(char *topic, byte *payload, unsigned int length);
 void reconecta_mqtt();
 void inscricao_topicos();
 
+int aleatorio = 0;
+
+void numero_aleatorio()
+{
+  srand(timeStamp()); // esse time pega o tempoAtual desde 1900
+  int min = 0;
+  int max = 9999;
+  aleatorio = min + (rand() % (max - min + 1));
+  Serial.println("A senha é " + String(aleatorio));
+}
 // Inicia a conexão WiFi
 void setup_wifi()
 {
@@ -90,7 +101,6 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
   Serial.println();
   tratar_msg(topic, msg);
-  
 }
 
 // Função de reconexão ao Broker MQTT
@@ -137,16 +147,25 @@ void inscricao_topicos()
 // Trata as mensagens recebidas
 void tratar_msg(char *topic, String msg)
 {
-  JsonDocument doc;
-  deserializeJson(doc, msg); // Deserialization
-   if (msg == "1234") {
-     if (doc.containsKey("EstadoLed")) {
-       LedBuiltInState = doc["EstadoLed"]; 
-     } // Validacao de dadosss
-   }
- 
- 
-   
+
+  JsonDocument doc;          // Use StaticJsonDocument para eficiência
+  deserializeJson(doc, msg); // Deserialização
+
+  // Verifique se o JSON contém a chave "Senha"
+  if (doc.containsKey("Toten"))
+  {
+    int senhaRecebida = doc["Toten"];
+
+    // Verifique se a senha recebida está correta
+    if (senhaRecebida == aleatorio)
+    {
+       
+      if (doc.containsKey("EstadoLed"))
+      {
+        LedBuiltInState = doc["EstadoLed"];
+      }
+    }
+  }
 
   // if (doc.containsKey("pressure"))
   // var_pressao = doc["pressure"];
@@ -163,9 +182,13 @@ void tratar_msg(char *topic, String msg)
   // if (doc.containsKey("timestamp"))
   // var_timestamp = doc["timestamp"];
 
-  // u8g2.clearBuffer();
-  // u8g2.setFont(u8g2_font_profont11_tf);
-  // u8g2.setCursor(0, 10); 
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_profont11_tf);
+  u8g2.setCursor(0, 10);
+  u8g2.print("Senha: ");
+  u8g2.setCursor(50, 10);
+  u8g2.print(aleatorio);
+  // u8g2.setCursor(0, 10);
   // u8g2.print("Temperatura: ");
   // u8g2.setCursor(80, 10);
   // u8g2.print(var_temperatura);
@@ -189,7 +212,7 @@ void tratar_msg(char *topic, String msg)
   // u8g2.print("Timestamp: ");
   // u8g2.setCursor(70, 60);
   // u8g2.print(var_timestamp);
-  // u8g2.sendBuffer(); 
+   u8g2.sendBuffer();
 
   // setTime(var_timestamp);
   // Serial.printf("%02d/%02d/%04d %02d:%02d:%02d \n", day(), month(), year());
@@ -250,6 +273,4 @@ void tratar_msg(char *topic, String msg)
   //   Serial.print("Temperatura: ");
   //   Serial.println(temperatura);
   //   Serial.println(" *C ");
-  }
-
-
+}

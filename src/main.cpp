@@ -24,7 +24,10 @@
 #include <U8g2lib.h>
 
 unsigned long tempo_anterior = 0;
-const unsigned long intervalo = 5000;
+unsigned long tempo_anterior2 = 0;
+const unsigned long intervalo = 6000; 
+const unsigned long trintaSegundos = 8000;
+
 
 #define BOTAO_BOOT_PIN 12
 #define SECOND_BOTAO_BOOT_PIN 0
@@ -33,6 +36,8 @@ const unsigned long intervalo = 5000;
 DHTesp dht;
 
 #define DHTPIN 32
+
+int senha;
 
 /******Objetos*******/
 
@@ -45,9 +50,9 @@ DHTesp dht;
 
 void setup()
 {
-
   dht.setup(DHTPIN, DHTesp::DHT22);
   Serial.begin(115200);
+
   setup_wifi();
   setup_time();
   inicializa_entradas();
@@ -58,11 +63,11 @@ void setup()
 
 void loop()
 {
-
   atualiza_time();
   atualiza_saidas();
   atualiza_botoes();
   atualiza_mqtt();
+
   // if (millis() - tempo_anterior >= intervalo)
   // {
   //   tempo_anterior = millis();
@@ -90,9 +95,10 @@ void loop()
   {
     tempo_anterior = millis();
     doc["TimeStamp"] = timeStamp();
+    doc["Toten"] = senha;
     mensagemEmFila = true;
   }
-      if (botao_boot_pressionado())
+  if (botao_boot_pressionado())
   {
     LedBuiltInState = !LedBuiltInState;
     doc["EstadoLed"] = LedBuiltInState;
@@ -105,13 +111,18 @@ void loop()
     doc["BotaoState"] = false;
     doc["TimeStamp"] = timeStamp();
     mensagemEmFila = true;
-  } 
+  }
 
-  if (mensagemEmFila) 
+  if (mensagemEmFila)
   {
     serializeJson(doc, json);
     publica_mqtt(mqtt_pub_topic2, json);
     mensagemEmFila = false;
+  }
+  if (millis() - tempo_anterior2 >= trintaSegundos)
+  {
+    tempo_anterior2 = millis();
+    numero_aleatorio();
   }
 }
 
