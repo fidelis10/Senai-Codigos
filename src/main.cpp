@@ -25,8 +25,9 @@
 
 unsigned long tempo_anterior = 0;
 unsigned long tempo_anterior2 = 0;
-const unsigned long intervalo = 6000; 
+const unsigned long intervalo = 8000; 
 const unsigned long trintaSegundos = 8000;
+const unsigned long noventaSegundos = 40000;
 
 
 #define BOTAO_BOOT_PIN 12
@@ -38,6 +39,8 @@ DHTesp dht;
 #define DHTPIN 32
 
 int senha;
+
+String nome;
 
 /******Objetos*******/
 
@@ -67,7 +70,7 @@ void loop()
   atualiza_saidas();
   atualiza_botoes();
   atualiza_mqtt();
-
+  display();
   // if (millis() - tempo_anterior >= intervalo)
   // {
   //   tempo_anterior = millis();
@@ -96,6 +99,7 @@ void loop()
     tempo_anterior = millis();
     doc["TimeStamp"] = timeStamp();
     doc["Toten"] = senha;
+    doc["Nome"] = nome;
     mensagemEmFila = true;
   }
   if (botao_boot_pressionado())
@@ -119,10 +123,22 @@ void loop()
     publica_mqtt(mqtt_pub_topic2, json);
     mensagemEmFila = false;
   }
-  if (millis() - tempo_anterior2 >= trintaSegundos)
+  if (senhaUsada == true)
+    {
+      if (millis() - tempo_anterior2 >= noventaSegundos)
+      {
+        tempo_anterior2 = 0;
+        nomeRegistrado = ""; 
+        senhaUsada = false;
+  }
+    }
+  else if (senhaUsada == false)
   {
-    tempo_anterior2 = millis();
-    numero_aleatorio();
+    if (millis() - tempo_anterior2 >= trintaSegundos)
+    {
+      tempo_anterior2 = millis();
+      numero_aleatorio();
+    }
   }
 }
 

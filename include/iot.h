@@ -17,3 +17,8 @@ void atualiza_mqtt();
 
 void numero_aleatorio();
 
+extern bool senhaUsada;
+
+extern int aleatorio;
+
+extern String nomeRegistrado; 

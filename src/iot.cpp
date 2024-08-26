@@ -7,7 +7,7 @@
 #include "saidas.h"
 #include "Atuadores.h"
 #include "tempo.h"
-#include <U8g2lib.h>
+
 #include <ArduinoJson.h>
 
 // float var_temperatura;
@@ -19,7 +19,9 @@
 
 bool ConfereSenha = false;
 
+bool senhaUsada = false;
 
+String nomeRegistrado = "";
 
 // Definição dos tópicos de inscrição
 #define mqtt_topic1 "projeto/fidelis"
@@ -35,8 +37,6 @@ const String cliente_id = "ESP32Client" + String(random(0xffff), HEX);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
-
 // Protótipos das funções
 void tratar_msg(char *topic, String msg);
 void callback(char *topic, byte *payload, unsigned int length);
@@ -48,7 +48,7 @@ int aleatorio = 0;
 void numero_aleatorio()
 {
   srand(timeStamp()); // esse time pega o tempoAtual desde 1900
-  int min = 0;
+  int min = 1000;
   int max = 9999;
   aleatorio = min + (rand() % (max - min + 1));
   Serial.println("A senha é " + String(aleatorio));
@@ -56,7 +56,7 @@ void numero_aleatorio()
 // Inicia a conexão WiFi
 void setup_wifi()
 {
-  u8g2.begin();
+
   Serial.println();
   Serial.print("Conectando-se a Rede WiFi ");
   Serial.print(ssid);
@@ -148,24 +148,32 @@ void inscricao_topicos()
 void tratar_msg(char *topic, String msg)
 {
 
-  JsonDocument doc;          // Use StaticJsonDocument para eficiência
-  deserializeJson(doc, msg); // Deserialização
-
-  // Verifique se o JSON contém a chave "Senha"
-  if (doc.containsKey("Toten"))
+  JsonDocument doc; // Use StaticJsonDocument para eficiência
+  deserializeJson(doc, msg);
+  if (doc.containsKey("Nome") && doc.containsKey("Toten"))
   {
+    String nomeRecebido = doc["Nome"];
     int senhaRecebida = doc["Toten"];
-
-    // Verifique se a senha recebida está correta
-    if (senhaRecebida == aleatorio)
+    if (nomeRegistrado == "")
     {
-       
-      if (doc.containsKey("EstadoLed"))
+      nomeRegistrado = nomeRecebido;
+    }
+    if (nomeRegistrado == nomeRecebido)
+    {
+      if (senhaRecebida == aleatorio)
       {
-        LedBuiltInState = doc["EstadoLed"];
+        senhaUsada = true;
+        if (doc.containsKey("EstadoLed"))
+        {
+          LedBuiltInState = doc["EstadoLed"];
+        }
       }
     }
   }
+
+  // Verifique se a senha recebida está correta
+
+  // Verifique se o JSON contém a chave "Senha"
 
   // if (doc.containsKey("pressure"))
   // var_pressao = doc["pressure"];
@@ -182,12 +190,6 @@ void tratar_msg(char *topic, String msg)
   // if (doc.containsKey("timestamp"))
   // var_timestamp = doc["timestamp"];
 
-  u8g2.clearBuffer();
-  u8g2.setFont(u8g2_font_profont11_tf);
-  u8g2.setCursor(0, 10);
-  u8g2.print("Senha: ");
-  u8g2.setCursor(50, 10);
-  u8g2.print(aleatorio);
   // u8g2.setCursor(0, 10);
   // u8g2.print("Temperatura: ");
   // u8g2.setCursor(80, 10);
@@ -212,7 +214,6 @@ void tratar_msg(char *topic, String msg)
   // u8g2.print("Timestamp: ");
   // u8g2.setCursor(70, 60);
   // u8g2.print(var_timestamp);
-   u8g2.sendBuffer();
 
   // setTime(var_timestamp);
   // Serial.printf("%02d/%02d/%04d %02d:%02d:%02d \n", day(), month(), year());
